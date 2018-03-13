@@ -61,8 +61,6 @@ typedef Subscription<std::bitset<uint8_t_max>> default_subscription;
 // Command
 class Command;
 
-//
-
 // Queue adapter interface
 template<typename T>
 class QueueAdapterInterface {
