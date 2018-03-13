@@ -12,8 +12,8 @@
 
 // @todo make these ourselves.
 #include "../external/MPMCQueue/MPMCQueue.h"
-#include "../external/microprofile/microprofile.h"
-#include "../external/microprofile/microprofile.cpp"
+//#include "../external/microprofile/microprofile.h"
+//#include "../external/microprofile/microprofile.cpp"
 
 namespace CWE {
 
@@ -26,6 +26,7 @@ typedef std::vector<std::thread *> Threads;
 
 // Limits
 const auto uint8_t_max = std::numeric_limits<uint8_t>::max();
+const auto uint_max = std::numeric_limits<uint>::max();
 
 // Subscription
 template<typename type>
@@ -58,8 +59,35 @@ class Subscription {
 
 typedef Subscription<std::bitset<uint8_t_max>> default_subscription;
 
+// CommandPoolInterface
+template <typename T>
+class CommandPoolInterface {
+ public:
+
+  virtual bool addCommand(T command) = 0;
+  virtual void run() = 0;
+  virtual bool isBusy() = 0;
+};
+
 // Command
-class Command;
+class BaseCommand : public default_subscription {
+ public:
+
+  explicit BaseCommand(uid_t index = 0);
+  BaseCommand(uid_t start, uid_t end, uid_t minsize = 0);
+  virtual ~BaseCommand();
+  uid_t size();
+  bool isRange();
+  virtual void execute() = 0;
+  bool addCommand(BaseCommand *command);
+  virtual BaseCommand *clone() const = 0;
+
+  // Members.
+  unsigned int start;
+  unsigned int end;
+  unsigned int minsize;
+  CommandPoolInterface<BaseCommand *> *pool;
+};
 
 // Queue adapter interface
 template<typename T>
@@ -69,11 +97,11 @@ class QueueAdapterInterface {
   virtual bool tryEmplace(T &item) = 0;
 };
 
-// Queue adapter for MPMCQueue.
+// Queue adapter for lock free MPMCQueue.
 template<typename T>
 class MPMCQueueAdapter : public rigtorp::MPMCQueue<T>, QueueAdapterInterface<T> {
  public:
-  MPMCQueueAdapter() : rigtorp::MPMCQueue<T>(4096) {};
+  MPMCQueueAdapter() : rigtorp::MPMCQueue<T>() {};
 
   bool tryPop(T &item) override {
     return this->try_pop(item);
@@ -110,7 +138,7 @@ class CommandPool {
     }
 
     for (uint8_t b = 0; b < numOfThreads; b++) {
-      queue.push_back((QueueAdapterInterface<Command *> *) new QueueAdapter<Command *>());
+      queue.push_back((QueueAdapterInterface<BaseCommand *> *) new QueueAdapter<BaseCommand *>());
     }
 
     while (runningThreads.load() != (numOfThreads - mainAsWorker)) {
@@ -158,7 +186,7 @@ class CommandPool {
   Atom<uint8_t> runningThreads;
   std::vector<std::thread *> threads;
   std::vector<bool> stop;
-  std::vector<QueueAdapterInterface<Command *> *> queue;
+  std::vector<QueueAdapterInterface<BaseCommand *> *> queue;
   std::vector<subscription> subscriptions;
 
 };

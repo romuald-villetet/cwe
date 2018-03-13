@@ -40,7 +40,7 @@ private:
                 "T must be nothrow destructible");
 
 public:
-  explicit MPMCQueue(const size_t capacity)
+  explicit MPMCQueue(const size_t capacity = 4096)
       : capacity_(capacity), head_(0), tail_(0) {
     if (capacity_ < 1) {
       throw std::invalid_argument("capacity < 1");
