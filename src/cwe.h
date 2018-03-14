@@ -65,7 +65,7 @@ class CommandPoolInterface {
  public:
 
   virtual bool addCommand(T command) = 0;
-  virtual void waitUntilFinished() = 0;
+  virtual void waitUntilDone() = 0;
   virtual bool isDone() = 0;
 };
 
@@ -181,7 +181,7 @@ class CommandPool : public CommandPoolInterface<BaseCommand *> {
     stop.clear();
   }
 
-  void waitUntilFinished() {
+  void waitUntilDone() {
     auto ready = false;
     if (getThreadId() == main_thread_id) {
       while (!ready) {
