@@ -60,33 +60,57 @@ class Subscription {
 typedef Subscription<std::bitset<uint8_t_max>> default_subscription;
 
 // CommandPoolInterface
-template <typename T>
+template<typename T>
 class CommandPoolInterface {
  public:
 
   virtual bool addCommand(T command) = 0;
-  virtual void run() = 0;
-  virtual bool isBusy() = 0;
+  virtual void waitUntilFinished() = 0;
+  virtual bool isDone() = 0;
 };
 
 // Command
 class BaseCommand : public default_subscription {
  public:
 
-  explicit BaseCommand(uid_t index = 0);
-  BaseCommand(uid_t start, uid_t end, uid_t minsize = 0);
-  virtual ~BaseCommand();
-  uid_t size();
-  bool isRange();
+  explicit BaseCommand(uid_t index = 0) : start(index), end(index), minsize(0), pool(nullptr) {}
+  BaseCommand(uid_t start, uid_t end, uid_t minsize = 0)
+      : start(start), end(end), minsize(minsize), pool(nullptr) {}
+
+  virtual ~BaseCommand() = default;
+
+  uid_t size() {
+    return end - start;
+  }
+
+  bool isRange() {
+    return size() != 0;
+  }
+
+  bool addCommand(BaseCommand *command) {
+    assert(pool != nullptr);
+    return pool->addCommand(command);
+  }
+
   virtual void execute() = 0;
-  bool addCommand(BaseCommand *command);
+
   virtual BaseCommand *clone() const = 0;
 
-  // Members.
   unsigned int start;
   unsigned int end;
   unsigned int minsize;
   CommandPoolInterface<BaseCommand *> *pool;
+};
+
+template<typename Derived>
+class Command : public BaseCommand {
+ public:
+
+  using BaseCommand::BaseCommand;
+
+  BaseCommand *clone() const override {
+    return new Derived(static_cast<Derived const &>(*this));
+  }
 };
 
 // Queue adapter interface
@@ -121,7 +145,7 @@ template<
     template<typename> class QueueAdapter = MPMCQueueAdapter,
     class subscription = default_subscription
 >
-class CommandPool {
+class CommandPool : public CommandPoolInterface<BaseCommand *> {
 
  public:
 
@@ -133,12 +157,13 @@ class CommandPool {
 
     stop.resize(numOfThreads);
     threads.reserve(numOfThreads);
+    queue.reserve(numOfThreads);
     for (uint8_t a = mainAsWorker; a < numOfThreads; a++) {
       threads[a] = new std::thread(&CommandPool::consume, this, a);
     }
 
     for (uint8_t b = 0; b < numOfThreads; b++) {
-      queue.push_back((QueueAdapterInterface<BaseCommand *> *) new QueueAdapter<BaseCommand *>());
+      queue[b] = (QueueAdapterInterface<BaseCommand *> *) new QueueAdapter<BaseCommand *>();
     }
 
     while (runningThreads.load() != (numOfThreads - mainAsWorker)) {
@@ -156,15 +181,26 @@ class CommandPool {
     stop.clear();
   }
 
-  void waitUntilfinished() {
+  void waitUntilFinished() {
     auto ready = false;
     if (getThreadId() == main_thread_id) {
       while (!ready) {
         if (mainAsWorker)
           consume(0);
-        ready = work.load() == 0;
+        ready = isDone();
       }
     }
+  }
+
+  bool addCommand(BaseCommand *command) {
+
+    if (command->pool == nullptr) {
+      command->pool = this;
+    }
+    // @todo implement partitioner.
+    delete command;
+
+    return true;
   }
 
  private:
@@ -172,10 +208,14 @@ class CommandPool {
   int consume(uint8_t a) {
     runningThreads++;
     while (stop[a] == false) {
-
+      // @todo implement worker logic.
     }
     runningThreads--;
     return 0;
+  }
+
+  bool isDone() {
+    return work.load() == 0;
   }
 
   CommandPool(const CommandPool &other) = delete;
