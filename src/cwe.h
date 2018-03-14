@@ -207,7 +207,7 @@ class CommandPool : public CommandPoolInterface<BaseCommand *> {
 
   int consume(uint8_t a) {
     runningThreads++;
-    while (stop[a] == false) {
+    while (!stop[a]) {
       // @todo implement worker logic.
     }
     runningThreads--;
