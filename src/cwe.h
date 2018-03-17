@@ -158,12 +158,13 @@ class CommandPool : public CommandPoolInterface<BaseCommand *> {
     stop.resize(numOfThreads);
     threads.reserve(numOfThreads);
     queue.reserve(numOfThreads);
-    for (uint8_t a = mainAsWorker; a < numOfThreads; a++) {
-      threads[a] = new std::thread(&CommandPool::consume, this, a);
-    }
 
     for (uint8_t b = 0; b < numOfThreads; b++) {
       queue[b] = (QueueAdapterInterface<BaseCommand *> *) new QueueAdapter<BaseCommand *>();
+    }
+
+    for (uint8_t a = mainAsWorker; a < numOfThreads; a++) {
+      threads[a] = new std::thread(&CommandPool::consume, this, a);
     }
 
     while (runningThreads.load() != (numOfThreads - mainAsWorker)) {
@@ -208,7 +209,19 @@ class CommandPool : public CommandPoolInterface<BaseCommand *> {
   int consume(uint8_t a) {
     runningThreads++;
     while (!stop[a]) {
-      // @todo implement worker logic.
+
+      BaseCommand *item;
+
+      if (!queue[a]->tryPop(item)) {
+        if (getThreadId() != main_thread_id) {
+          continue;
+        }
+        break;
+      }
+
+      item->execute();
+      delete item;
+      work--;
     }
     runningThreads--;
     return 0;
