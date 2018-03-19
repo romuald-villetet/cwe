@@ -9,6 +9,8 @@
 #include <chrono>
 #include <iostream>
 #include <bitset>
+#include <math.h>
+#include <random>
 
 // @todo make these ourselves.
 #include "../external/MPMCQueue/MPMCQueue.h"
@@ -26,7 +28,6 @@ typedef std::vector<std::thread *> Threads;
 
 // Limits
 const auto uint8_t_max = std::numeric_limits<uint8_t>::max();
-const auto uint_max = std::numeric_limits<uint>::max();
 
 // Subscription
 template<typename type>
@@ -34,8 +35,10 @@ class Subscription {
  public:
 
   Subscription() : mask(0) {};
-  bool accepts(type &mask) {
-    return (mask == 0) ? (mask == this->mask) : (mask & this->mask) == mask;
+
+  bool accepts(Subscription &subscription) {
+    return (subscription.mask == 0) ? (subscription.mask == this->mask) : (subscription.mask & this->mask)
+        == subscription.mask;
   }
 
   void subscribe(type &mask) {
@@ -74,7 +77,7 @@ class BaseCommand : public default_subscription {
  public:
 
   explicit BaseCommand(uid_t index = 0) : start(index), end(index), minsize(0), pool(nullptr) {}
-  BaseCommand(uid_t start, uid_t end, uid_t minsize = 0)
+  BaseCommand(uint start, uint end, uint minsize = 0)
       : start(start), end(end), minsize(minsize), pool(nullptr) {}
 
   virtual ~BaseCommand() = default;
@@ -89,6 +92,8 @@ class BaseCommand : public default_subscription {
 
   bool addCommand(BaseCommand *command) {
     assert(pool != nullptr);
+    command->pool = pool;
+
     return pool->addCommand(command);
   }
 
@@ -96,12 +101,13 @@ class BaseCommand : public default_subscription {
 
   virtual BaseCommand *clone() const = 0;
 
-  unsigned int start;
-  unsigned int end;
-  unsigned int minsize;
+  uint start;
+  uint end;
+  uint minsize;
   CommandPoolInterface<BaseCommand *> *pool;
 };
 
+// Template for a copy construction cloneable command
 template<typename Derived>
 class Command : public BaseCommand {
  public:
@@ -119,6 +125,8 @@ class QueueAdapterInterface {
  public:
   virtual bool tryPop(T &item) = 0;
   virtual bool tryEmplace(T &item) = 0;
+  virtual void emplace(T &item) = 0;
+  virtual void pop(T &item) = 0;
 };
 
 // Queue adapter for lock free MPMCQueue.
@@ -134,13 +142,88 @@ class MPMCQueueAdapter : public rigtorp::MPMCQueue<T>, QueueAdapterInterface<T> 
   bool tryEmplace(T &item) override {
     return this->try_emplace(item);
   }
+
+  void emplace(T &item) override {
+    rigtorp::MPMCQueue<T>::emplace(item);
+  }
+
+  void pop(T &item) override {
+    rigtorp::MPMCQueue<T>::pop(item);
+  }
 };
+
+// Part
+struct Part {
+
+  Part(uint begin, uint end, uint threadIndex, uint minSize)
+      : begin(begin), end(end), threadIndex(threadIndex), minSize(minSize) {};
+
+  uint begin;
+  uint end;
+  uint threadIndex;
+  uint minSize;
+};
+
+// PartitionScheme
+typedef std::vector<Part> PartitionScheme;
+
+// CommandPartitioner
+class CommandPartitioner {
+ public:
+
+  CommandPartitioner() = default;
+
+  virtual PartitionScheme partition(std::vector<uint8_t> threads, uint start, uint end, uint minSize = 0) {
+
+    uint threadSize = threads.size();
+    PartitionScheme parts;
+    unsigned int range = end - start;
+
+    assert(threadSize != 0);
+
+    if (range != 0) {
+
+      uint8_t thread = 0;
+
+      if (minSize == 0 && range == 1) {
+        minSize = 1;
+      } else if (minSize == 0) {
+        minSize = range / threadSize;
+      }
+
+      auto part = (uint) floor(range / minSize);
+      auto leftOver = range % minSize;
+
+      for (uint a = 0; a < part; a++) {
+        parts.emplace_back(Part(start, start + minSize, threads[thread % threadSize], minSize));
+        start += minSize;
+        thread++;
+      }
+
+      if (leftOver != 0) {
+        parts.emplace_back(Part(range - leftOver, range, threads[thread % threadSize], minSize));
+      }
+    } else {
+
+      std::uniform_int_distribution<unsigned int> distribution(0, threads.size() - 1);
+      parts.emplace_back(Part(start, end, threads[distribution(generator)], minSize));
+    }
+
+    return parts;
+  }
+
+ private:
+  static std::default_random_engine generator;
+};
+
+std::default_random_engine CommandPartitioner::generator = std::default_random_engine{};
 
 // CommandPool
 template<
     uint8_t n = 0,
     bool mainAsWorker = true,
     bool steal = false,
+    class Partitioner = CommandPartitioner,
     template<typename> class Atom = std::atomic,
     template<typename> class QueueAdapter = MPMCQueueAdapter,
     class subscription = default_subscription
@@ -149,7 +232,7 @@ class CommandPool : public CommandPoolInterface<BaseCommand *> {
 
  public:
 
-  CommandPool() : numOfThreads(n), runningThreads(0) {
+  CommandPool() : numOfThreads(n), runningThreads(0), partitioner() {
 
     if (numOfThreads == 0) {
       numOfThreads = hardware_concurrency;
@@ -198,7 +281,26 @@ class CommandPool : public CommandPoolInterface<BaseCommand *> {
     if (command->pool == nullptr) {
       command->pool = this;
     }
-    // @todo implement partitioner.
+
+    std::vector<uint8_t> result;
+    for (uint8_t a = 0; a < subscriptions.size(); a++) {
+      if (subscriptions[a].accepts(*command)) {
+        result.push_back(a);
+      };
+    }
+
+    PartitionScheme scheme = partitioner.partition(result, command->start, command->end, command->minsize);
+    BaseCommand *clonedCommand;
+
+    for (auto &it : scheme) {
+      clonedCommand = command->clone();
+      clonedCommand->start = it.begin;
+      clonedCommand->end = it.end;
+      clonedCommand->minsize = it.minSize;
+      work++;
+      queue[it.threadIndex]->emplace(clonedCommand);
+    }
+
     delete command;
 
     return true;
@@ -241,6 +343,7 @@ class CommandPool : public CommandPoolInterface<BaseCommand *> {
   std::vector<bool> stop;
   std::vector<QueueAdapterInterface<BaseCommand *> *> queue;
   std::vector<subscription> subscriptions;
+  Partitioner partitioner;
 
 };
 }
