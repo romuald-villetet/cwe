@@ -124,6 +124,6 @@ TEST(Subscription, accepts) {
 
 
     // Test all "accepts" methods.
-    EXPECT_EQ(s1.accepts(s2), testData[a][2]);
+    EXPECT_EQ(s1.accepts(s2), (const bool) testData[a][2]);
   }
 }

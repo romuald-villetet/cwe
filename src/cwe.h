@@ -144,36 +144,44 @@ class QueueAdapterInterface {
 
 // Queue adapter for lock free MPMCQueue.
 template<typename T>
-class MPMCQueueAdapter : public rigtorp::MPMCQueue<T>, QueueAdapterInterface<T> {
+class MPMCQueueAdapter : public QueueAdapterInterface<T> {
  public:
-  MPMCQueueAdapter() : rigtorp::MPMCQueue<T>() {};
-
-  bool tryPop(T &item) override {
-    return this->try_pop(item);
+  MPMCQueueAdapter() {
+    queue = new rigtorp::MPMCQueue<T>();
   };
 
-  bool tryEmplace(T &item) override {
-    return this->try_emplace(item);
+  ~MPMCQueueAdapter() {
+    delete queue;
   }
 
-  void emplace(T &item) override {
-    rigtorp::MPMCQueue<T>::emplace(item);
+  bool tryPop(T &item) {
+    return queue->try_pop(item);
+  };
+
+  bool tryEmplace(T &item) {
+    return queue->try_emplace(item);
   }
 
-  void pop(T &item) override {
-    rigtorp::MPMCQueue<T>::pop(item);
+  void emplace(T &item) {
+    queue->emplace(item);
   }
+
+  void pop(T &item) {
+    queue->pop(item);
+  }
+private:
+  rigtorp::MPMCQueue<T> *queue;
 };
 
 // Part
 struct Part {
 
-  Part(uintmax_t begin, uintmax_t end, uintmax_t threadIndex, uintmax_t minSize)
+  Part(uintmax_t begin, uintmax_t end, uint8_t threadIndex, uintmax_t minSize)
       : begin(begin), end(end), threadIndex(threadIndex), minSize(minSize) {};
 
   uintmax_t begin;
   uintmax_t end;
-  uintmax_t threadIndex;
+  uint8_t threadIndex;
   uintmax_t minSize;
 };
 
@@ -218,7 +226,7 @@ class CommandPartitioner {
       }
     } else {
 
-      std::uniform_int_distribution<unsigned long long int> distribution(0, threads.size() - 1);
+      std::uniform_int_distribution<unsigned int> distribution(0, threads.size() - 1);
       parts.emplace_back(Part(start, end, threads[distribution(generator)], minSize));
     }
 
@@ -241,6 +249,17 @@ template<
 >
 class CommandPool : public CommandPoolInterface<BaseCommand *> {
 
+
+  static_assert(
+    std::is_base_of<CommandPartitioner, Partitioner>::value,
+    "CommandPartitioner is not a base class of given Partitioner"
+    );
+
+  static_assert(
+    std::is_base_of<QueueAdapterInterface<BaseCommand *>, QueueAdapter<BaseCommand *>>::value,
+    "QueueAdapterInterface<BaseCommand *> is not a base class of given QueueAdapter<BaseCommand *>"
+  );
+
  public:
 
   CommandPool() : numOfThreads(n), runningThreads(0), partitioner() {
@@ -250,13 +269,9 @@ class CommandPool : public CommandPoolInterface<BaseCommand *> {
     }
 
     stop.resize(numOfThreads);
-    stop.reserve(numOfThreads);
-    threads.reserve(numOfThreads);
-    queue.reserve(numOfThreads);
 
     for (uint8_t b = 0; b < numOfThreads; b++) {
-      QueueAdapterInterface<BaseCommand *> *adapter = (QueueAdapterInterface<BaseCommand *> *) new QueueAdapter<BaseCommand *>();
-      queue.push_back(adapter);
+      queue.push_back(std::make_unique<QueueAdapter<BaseCommand *>>(*new QueueAdapter<BaseCommand *>));
     }
 
     for (uint8_t a = mainAsWorker; a < numOfThreads; a++) {
@@ -278,6 +293,7 @@ class CommandPool : public CommandPoolInterface<BaseCommand *> {
     while (runningThreads.load() != 0) {
     }
 
+    queue.clear();
     threads.clear();
   }
 
@@ -357,7 +373,7 @@ class CommandPool : public CommandPoolInterface<BaseCommand *> {
   Atom<uint8_t> runningThreads;
   std::vector<std::thread *> threads;
   std::vector<uint8_t> stop;
-  std::vector<QueueAdapterInterface<BaseCommand *> *> queue;
+  std::vector<std::unique_ptr<QueueAdapterInterface<BaseCommand *>>> queue;
   std::vector<subscription> subscriptions;
   Partitioner partitioner;
 
