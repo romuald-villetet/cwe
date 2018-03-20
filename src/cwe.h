@@ -76,13 +76,14 @@ class CommandPoolInterface {
 class BaseCommand : public default_subscription {
  public:
 
-  explicit BaseCommand(uid_t index = 0) : start(index), end(index), minsize(0), pool(nullptr) {}
-  BaseCommand(uint start, uint end, uint minsize = 0)
+  explicit BaseCommand(uintmax_t index = 0) : start(index), end(index), minsize(0), pool(nullptr) {}
+
+  BaseCommand(uintmax_t start, uintmax_t end, uintmax_t minsize = 0)
       : start(start), end(end), minsize(minsize), pool(nullptr) {}
 
   virtual ~BaseCommand() = default;
 
-  uid_t size() {
+  uintmax_t size() {
     return end - start;
   }
 
@@ -101,9 +102,9 @@ class BaseCommand : public default_subscription {
 
   virtual BaseCommand *clone() const = 0;
 
-  uint start;
-  uint end;
-  uint minsize;
+  uintmax_t start;
+  uintmax_t end;
+  uintmax_t minsize;
   CommandPoolInterface<BaseCommand *> *pool;
 };
 
@@ -155,13 +156,13 @@ class MPMCQueueAdapter : public rigtorp::MPMCQueue<T>, QueueAdapterInterface<T> 
 // Part
 struct Part {
 
-  Part(uint begin, uint end, uint threadIndex, uint minSize)
+  Part(uintmax_t begin, uintmax_t end, uintmax_t threadIndex, uintmax_t minSize)
       : begin(begin), end(end), threadIndex(threadIndex), minSize(minSize) {};
 
-  uint begin;
-  uint end;
-  uint threadIndex;
-  uint minSize;
+  uintmax_t begin;
+  uintmax_t end;
+  uintmax_t threadIndex;
+  uintmax_t minSize;
 };
 
 // PartitionScheme
@@ -173,11 +174,11 @@ class CommandPartitioner {
 
   CommandPartitioner() = default;
 
-  virtual PartitionScheme partition(std::vector<uint8_t> threads, uint start, uint end, uint minSize = 0) {
+  virtual PartitionScheme partition(std::vector<uint8_t> threads, uintmax_t start, uintmax_t end, uintmax_t minSize = 0) {
 
-    uint threadSize = threads.size();
+    uint8_t threadSize = (uint8_t) threads.size();
     PartitionScheme parts;
-    unsigned int range = end - start;
+    uintmax_t range = end - start;
 
     assert(threadSize != 0);
 
@@ -191,10 +192,10 @@ class CommandPartitioner {
         minSize = range / threadSize;
       }
 
-      auto part = (uint) floor(range / minSize);
+      auto part = (uintmax_t) floor(range / minSize);
       auto leftOver = range % minSize;
 
-      for (uint a = 0; a < part; a++) {
+      for (uintmax_t a = 0; a < part; a++) {
         parts.emplace_back(Part(start, start + minSize, threads[thread % threadSize], minSize));
         start += minSize;
         thread++;
@@ -205,7 +206,7 @@ class CommandPartitioner {
       }
     } else {
 
-      std::uniform_int_distribution<unsigned int> distribution(0, threads.size() - 1);
+      std::uniform_int_distribution<unsigned long long int> distribution(0, threads.size() - 1);
       parts.emplace_back(Part(start, end, threads[distribution(generator)], minSize));
     }
 
@@ -239,15 +240,17 @@ class CommandPool : public CommandPoolInterface<BaseCommand *> {
     }
 
     stop.resize(numOfThreads);
+    stop.reserve(numOfThreads);
     threads.reserve(numOfThreads);
     queue.reserve(numOfThreads);
 
     for (uint8_t b = 0; b < numOfThreads; b++) {
-      queue[b] = (QueueAdapterInterface<BaseCommand *> *) new QueueAdapter<BaseCommand *>();
+      QueueAdapterInterface<BaseCommand *> *adapter = (QueueAdapterInterface<BaseCommand *> *) new QueueAdapter<BaseCommand *>();
+      queue.push_back(adapter);
     }
 
     for (uint8_t a = mainAsWorker; a < numOfThreads; a++) {
-      threads[a] = new std::thread(&CommandPool::consume, this, a);
+      threads.push_back(new std::thread(&CommandPool::consume, this, a - mainAsWorker));
     }
 
     while (runningThreads.load() != (numOfThreads - mainAsWorker)) {
@@ -256,13 +259,16 @@ class CommandPool : public CommandPoolInterface<BaseCommand *> {
 
   ~CommandPool() {
 
-    for (uint8_t a = mainAsWorker; a < numOfThreads; a++) {
-      stop[a] = true;
+    stop.assign(numOfThreads, true);
+
+    for (uint8_t a = 0 ; a < numOfThreads - mainAsWorker;  a++) {
       threads[a]->join();
     }
 
+    while (runningThreads.load() != 0) {
+    }
+
     threads.clear();
-    stop.clear();
   }
 
   void waitUntilDone() {
