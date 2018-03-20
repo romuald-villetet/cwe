@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Threads REQUIRED)
 
-add_executable(tests tests/main.cpp tests/dev.cpp external/gtest/gtest-all.cc )
+add_executable(tests tests/main.cpp tests/dev.cpp external/gtest/gtest-all.cc tests/subscription.cpp)
 target_link_libraries(tests ${CMAKE_THREAD_LIBS_INIT})
 target_include_directories(
   tests PUBLIC

@@ -35,17 +35,28 @@ class Subscription {
  public:
 
   Subscription() : mask(0) {};
+  Subscription(type mask) : mask(mask) {};
 
   bool accepts(Subscription &subscription) {
     return (subscription.mask == 0) ? (subscription.mask == this->mask) : (subscription.mask & this->mask)
         == subscription.mask;
   }
 
-  void subscribe(type &mask) {
+  void subscribeToGroup (type group) {
+    type bit = 1 << group;
+    subscribe(bit);
+  }
+
+  void subscribe(const type &mask) {
     this->mask = this->mask | mask;
   }
 
-  void unSubscribe(type mask) {
+  void unSubscribeFromGroup(const type group) {
+    type bit = 1 << group;
+    unSubscribe(bit);
+  }
+
+  void unSubscribe(const type mask) {
     for (int a = 0; a < sizeof(type) * 8; a++) {
       if (mask & (1 << a)) {
         if ((this->mask & (1 << a))) {
@@ -55,12 +66,13 @@ class Subscription {
     }
   }
 
- private:
+ protected:
   type mask;
 
 };
 
-typedef Subscription<std::bitset<uint8_t_max>> default_subscription;
+typedef std::bitset<uint8_t_max> subscription_type;
+typedef Subscription<subscription_type> default_subscription;
 
 // CommandPoolInterface
 template<typename T>
@@ -172,7 +184,7 @@ typedef std::vector<Part> PartitionScheme;
 class CommandPartitioner {
  public:
 
-  CommandPartitioner() = default;
+  CommandPartitioner() : generator(std::default_random_engine{}) {};
 
   virtual PartitionScheme partition(std::vector<uint8_t> threads, uintmax_t start, uintmax_t end, uintmax_t minSize = 0) {
 
@@ -214,10 +226,8 @@ class CommandPartitioner {
   }
 
  private:
-  static std::default_random_engine generator;
+  std::default_random_engine generator;
 };
-
-std::default_random_engine CommandPartitioner::generator = std::default_random_engine{};
 
 // CommandPool
 template<
