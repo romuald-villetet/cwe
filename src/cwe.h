@@ -346,7 +346,7 @@ class CommandPool : public CommandPoolInterface<BaseCommand *> {
   Atom<uint32_t> work;
   Atom<uint8_t> runningThreads;
   std::vector<std::thread *> threads;
-  std::vector<bool> stop;
+  std::vector<uint8_t> stop;
   std::vector<QueueAdapterInterface<BaseCommand *> *> queue;
   std::vector<subscription> subscriptions;
   Partitioner partitioner;
