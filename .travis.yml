@@ -1,0 +1,191 @@
+language: cpp
+dist: trusty
+
+#
+# Build Dependencies
+#
+before_script:
+
+  #
+  # Build Folder
+  #
+  - mkdir build
+  - cd build
+
+  #
+  # Update / Install CMake
+  #
+  - |
+    if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
+      mkdir -p external/cmake
+      pushd external/cmake
+      wget https://cmake.org/files/v3.8/cmake-3.8.0-Linux-x86_64.sh
+      chmod +x cmake-*-Linux-x86_64.sh
+      ./cmake-*-Linux-x86_64.sh --exclude-subdir --skip-license
+      export PATH="${PWD}/bin:$PATH"
+      popd
+    else
+      if ! brew ls --version cmake &>/dev/null; then brew update; brew install cmake; fi
+    fi
+
+#
+# Build Matrix
+#
+matrix:
+  include:
+
+  #
+  # G++ 5
+  #
+  - os: linux
+    env:
+      - TEST="G++ 5"
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - gcc-5
+          - g++-5
+    script:
+      - cmake -DCMAKE_CXX_COMPILER="g++-5" ..
+      - make
+      - make tests
+
+  #
+  # G++ 6
+  #
+  - os: linux
+    env:
+      - TEST="G++ 6"
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - gcc-6
+          - g++-6
+    script:
+      - cmake -DCMAKE_CXX_COMPILER="g++-6" ..
+      - make
+      - make tests
+
+  #
+  # Clang 3.8
+  #
+  - os: linux
+    env:
+      - TEST="Clang 3.8"
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-4.0
+        packages:
+          - clang-3.8
+          - gcc-6
+          - g++-6
+    script:
+      - cmake -DCMAKE_C_COMPILER=clang-3.8 -DCMAKE_CXX_COMPILER=clang++-3.8 ..
+      - make
+      - make tests
+
+  #
+  # Clang 3.9
+  #
+  - os: linux
+    env:
+      - TEST="Clang 3.9"
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-3.9
+        packages:
+          - clang-3.9
+          - gcc-6
+          - g++-6
+    script:
+      - cmake -DCMAKE_C_COMPILER=clang-3.9 -DCMAKE_CXX_COMPILER=clang++-3.9 ..
+      - make
+      - make tests
+
+  #
+  # Clang 4.0
+  #
+  - os: linux
+    env:
+      - TEST="Clang 4.0"
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-4.0
+        packages:
+          - clang-4.0
+          - gcc-6
+          - g++-6
+    script:
+      - cmake -DCMAKE_C_COMPILER=clang-4.0 -DCMAKE_CXX_COMPILER=clang++-4.0 ..
+      - make
+      - make tests
+
+  #
+  # XCode 7.3
+  #
+  - os: osx
+    env:
+      - TEST="XCode 7.3"
+    osx_image: xcode7.3
+    script:
+      - cmake ..
+      - make
+      - make tests
+
+  #
+  # XCode 8
+  #
+  - os: osx
+    env:
+      - TEST="XCode 8"
+    osx_image: xcode8
+    script:
+      - cmake ..
+      - make
+      - make tests
+
+  #
+  # XCode 8.1
+  #
+  - os: osx
+    env:
+      - TEST="XCode 8.1"
+    osx_image: xcode8.1
+    script:
+      - cmake ..
+      - make
+      - make tests
+
+  #
+  # XCode 8.2
+  #
+  - os: osx
+    env:
+      - TEST="XCode 8.2"
+    osx_image: xcode8.2
+    script:
+      - cmake ..
+      - make
+      - make tests
+
+  #
+  # XCode 8.3
+  #
+  - os: osx
+    env:
+      - TEST="XCode 8.3"
+    osx_image: xcode8.3
+    script:
+      - cmake ..
+      - make
+      - make tests
