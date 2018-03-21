@@ -1,5 +1,5 @@
-#ifndef COREWORKSENGINE_CWE_H
-#define COREWORKSENGINE_CWE_H
+#ifndef CWE_H
+#define CWE_H
 
 #include <thread>
 #include <vector>
@@ -11,6 +11,7 @@
 #include <bitset>
 #include <math.h>
 #include <random>
+#include <memory>
 
 // @todo make these ourselves.
 #include "../external/MPMCQueue/MPMCQueue.h"
@@ -42,7 +43,7 @@ class Subscription {
         == subscription.mask;
   }
 
-  void subscribeToGroup (type group) {
+  void subscribeToGroup(type group) {
     type bit = 1 << group;
     subscribe(bit);
   }
@@ -169,7 +170,7 @@ class MPMCQueueAdapter : public QueueAdapterInterface<T> {
   void pop(T &item) {
     queue->pop(item);
   }
-private:
+ private:
   rigtorp::MPMCQueue<T> *queue;
 };
 
@@ -194,7 +195,10 @@ class CommandPartitioner {
 
   CommandPartitioner() : generator(std::default_random_engine{}) {};
 
-  virtual PartitionScheme partition(std::vector<uint8_t> threads, uintmax_t start, uintmax_t end, uintmax_t minSize = 0) {
+  virtual PartitionScheme partition(std::vector<uint8_t> threads,
+                                    uintmax_t start,
+                                    uintmax_t end,
+                                    uintmax_t minSize = 0) {
 
     uint8_t threadSize = (uint8_t) threads.size();
     PartitionScheme parts;
@@ -249,16 +253,15 @@ template<
 >
 class CommandPool : public CommandPoolInterface<BaseCommand *> {
 
+  static_assert(
+      std::is_base_of<CommandPartitioner, Partitioner>::value,
+      "CommandPartitioner is not a base class of given Partitioner"
+               );
 
   static_assert(
-    std::is_base_of<CommandPartitioner, Partitioner>::value,
-    "CommandPartitioner is not a base class of given Partitioner"
-    );
-
-  static_assert(
-    std::is_base_of<QueueAdapterInterface<BaseCommand *>, QueueAdapter<BaseCommand *>>::value,
-    "QueueAdapterInterface<BaseCommand *> is not a base class of given QueueAdapter<BaseCommand *>"
-  );
+      std::is_base_of<QueueAdapterInterface<BaseCommand *>, QueueAdapter<BaseCommand *>>::value,
+      "QueueAdapterInterface<BaseCommand *> is not a base class of given QueueAdapter<BaseCommand *>"
+               );
 
  public:
 
@@ -271,7 +274,7 @@ class CommandPool : public CommandPoolInterface<BaseCommand *> {
     stop.resize(numOfThreads);
 
     for (uint8_t b = 0; b < numOfThreads; b++) {
-      queue.push_back(std::make_unique<QueueAdapter<BaseCommand *>>(*new QueueAdapter<BaseCommand *>));
+      queue.push_back(std::unique_ptr<QueueAdapter<BaseCommand *>>(new QueueAdapter<BaseCommand *>));
     }
 
     for (uint8_t a = mainAsWorker; a < numOfThreads; a++) {
@@ -286,7 +289,7 @@ class CommandPool : public CommandPoolInterface<BaseCommand *> {
 
     stop.assign(numOfThreads, true);
 
-    for (uint8_t a = 0 ; a < numOfThreads - mainAsWorker;  a++) {
+    for (uint8_t a = 0; a < numOfThreads - mainAsWorker; a++) {
       threads[a]->join();
     }
 
@@ -379,4 +382,4 @@ class CommandPool : public CommandPoolInterface<BaseCommand *> {
 
 };
 }
-#endif //COREWORKSENGINE_CWE_H
+#endif // CWE_H
