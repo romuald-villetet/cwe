@@ -1,6 +1,7 @@
 # Introduction
 
 Master: [![Build Status](https://travis-ci.org/romualdvilletet/cwe.svg?branch=master)](https://travis-ci.org/romualdvilletet/cwe)
+
 Develop: [![Build Status](https://travis-ci.org/romualdvilletet/cwe.svg?branch=develop)](https://travis-ci.org/romualdvilletet/cwe)
 
 This is a personal c++11 project for building and profiling multithreaded applications/components and video games.
