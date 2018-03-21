@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/romualdvilletet/cwe.svg?branch=master)](https://travis-ci.org/romualdvilletet/cwe)
+[![Build Status](https://travis-ci.org/romualdvilletet/cwe.svg?branch=master)](https://travis-ci.org/romualdvilletet/cwe) [![Build status](https://ci.appveyor.com/api/projects/status/du2ff9mplg975wly?svg=true)](https://ci.appveyor.com/project/romualdvilletet/cwe)
 
 # Introduction
 
