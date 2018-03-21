@@ -1,6 +1,10 @@
 language: cpp
 dist: trusty
 
+branches:
+  only:
+  - master
+
 #
 # Build Dependencies
 #
@@ -136,64 +140,25 @@ matrix:
       - ctest
 
   #
-  # XCode 7.3
-  #
-  - os: osx
-    env:
-      - TEST="XCode 7.3"
-    osx_image: xcode7.3
-    script:
-      - cmake ..
-      - make
-      - make tests
-      - ctest
-
-  #
-  # XCode 8
-  #
-  - os: osx
-    env:
-      - TEST="XCode 8"
-    osx_image: xcode8
-    script:
-      - cmake ..
-      - make
-      - make tests
-      - ctest
-
-  #
-  # XCode 8.1
-  #
-  - os: osx
-    env:
-      - TEST="XCode 8.1"
-    osx_image: xcode8.1
-    script:
-      - cmake ..
-      - make
-      - make tests
-      - ctest
-
-  #
-  # XCode 8.2
-  #
-  - os: osx
-    env:
-      - TEST="XCode 8.2"
-    osx_image: xcode8.2
-    script:
-      - cmake ..
-      - make
-      - make tests
-      - ctest
-
-  #
   # XCode 8.3
   #
   - os: osx
     env:
       - TEST="XCode 8.3"
     osx_image: xcode8.3
+    script:
+      - cmake ..
+      - make
+      - make tests
+      - ctest
+
+  #
+  # XCode 9.2
+  #
+  - os: osx
+    env:
+      - TEST="XCode 9.2"
+    osx_image: xcode9.2
     script:
       - cmake ..
       - make
