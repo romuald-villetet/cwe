@@ -51,6 +51,7 @@ matrix:
       - cmake -DCMAKE_CXX_COMPILER="g++-5" ..
       - make
       - make tests
+      - ctest
 
   #
   # G++ 6
@@ -69,6 +70,7 @@ matrix:
       - cmake -DCMAKE_CXX_COMPILER="g++-6" ..
       - make
       - make tests
+      - ctest
 
   #
   # Clang 3.8
@@ -89,6 +91,7 @@ matrix:
       - cmake -DCMAKE_C_COMPILER=clang-3.8 -DCMAKE_CXX_COMPILER=clang++-3.8 ..
       - make
       - make tests
+      - ctest
 
   #
   # Clang 3.9
@@ -109,6 +112,7 @@ matrix:
       - cmake -DCMAKE_C_COMPILER=clang-3.9 -DCMAKE_CXX_COMPILER=clang++-3.9 ..
       - make
       - make tests
+      - ctest
 
   #
   # Clang 4.0
@@ -129,6 +133,7 @@ matrix:
       - cmake -DCMAKE_C_COMPILER=clang-4.0 -DCMAKE_CXX_COMPILER=clang++-4.0 ..
       - make
       - make tests
+      - ctest
 
   #
   # XCode 7.3
@@ -141,6 +146,7 @@ matrix:
       - cmake ..
       - make
       - make tests
+      - ctest
 
   #
   # XCode 8
@@ -153,6 +159,7 @@ matrix:
       - cmake ..
       - make
       - make tests
+      - ctest
 
   #
   # XCode 8.1
@@ -165,6 +172,7 @@ matrix:
       - cmake ..
       - make
       - make tests
+      - ctest
 
   #
   # XCode 8.2
@@ -177,6 +185,7 @@ matrix:
       - cmake ..
       - make
       - make tests
+      - ctest
 
   #
   # XCode 8.3
@@ -189,3 +198,4 @@ matrix:
       - cmake ..
       - make
       - make tests
+      - ctest
