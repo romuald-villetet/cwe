@@ -86,7 +86,8 @@ class CommandPoolInterface {
 };
 
 // Command
-class BaseCommand : public default_subscription {
+template <class subscription = default_subscription>
+class BaseCommand : public subscription {
  public:
 
   explicit BaseCommand(uintmax_t index = 0) : start(index), end(index), minsize(0), pool(nullptr) {}
@@ -122,8 +123,8 @@ class BaseCommand : public default_subscription {
 };
 
 // Template for a copy construction cloneable command
-template<typename Derived>
-class Command : public BaseCommand {
+template<typename Derived, class subscription = default_subscription>
+class Command : public BaseCommand<subscription> {
  public:
 
   using BaseCommand::BaseCommand;
@@ -152,6 +153,7 @@ class MPMCQueueAdapter : public QueueAdapterInterface<T> {
   };
 
   ~MPMCQueueAdapter() {
+    printf("gets hrere");
     delete queue;
   }
 
@@ -251,7 +253,7 @@ template<
     template<typename> class QueueAdapter = MPMCQueueAdapter,
     class subscription = default_subscription
 >
-class CommandPool : public CommandPoolInterface<BaseCommand *> {
+class CommandPool : public CommandPoolInterface<BaseCommand<subscription> *> {
 
   static_assert(
       std::is_base_of<CommandPartitioner, Partitioner>::value,
@@ -259,7 +261,7 @@ class CommandPool : public CommandPoolInterface<BaseCommand *> {
                );
 
   static_assert(
-      std::is_base_of<QueueAdapterInterface<BaseCommand *>, QueueAdapter<BaseCommand *>>::value,
+      std::is_base_of<QueueAdapterInterface<BaseCommand<subscription> *>, QueueAdapter<BaseCommand<subscription> *>>::value,
       "QueueAdapterInterface<BaseCommand *> is not a base class of given QueueAdapter<BaseCommand *>"
                );
 
@@ -274,7 +276,7 @@ class CommandPool : public CommandPoolInterface<BaseCommand *> {
     stop.resize(numOfThreads);
 
     for (uint8_t b = 0; b < numOfThreads; b++) {
-      queue.push_back(std::unique_ptr<QueueAdapter<BaseCommand *>>(new QueueAdapter<BaseCommand *>));
+      queue.push_back(std::unique_ptr<QueueAdapter<BaseCommand<subscription> *>>(new QueueAdapter<BaseCommand<subscription> *>));
     }
 
     for (uint8_t a = mainAsWorker; a < numOfThreads; a++) {
@@ -311,11 +313,7 @@ class CommandPool : public CommandPoolInterface<BaseCommand *> {
     }
   }
 
-  bool addCommand(BaseCommand *command) {
-
-    if (command->pool == nullptr) {
-      command->pool = this;
-    }
+  bool addCommand(BaseCommand<subscription> *command) {
 
     std::vector<uint8_t> result;
     for (uint8_t a = 0; a < subscriptions.size(); a++) {
@@ -325,7 +323,10 @@ class CommandPool : public CommandPoolInterface<BaseCommand *> {
     }
 
     PartitionScheme scheme = partitioner.partition(result, command->start, command->end, command->minsize);
-    BaseCommand *clonedCommand;
+    BaseCommand<subscription> *clonedCommand;
+    if (command->pool == nullptr) {
+      command->pool = this;
+    }
 
     for (auto &it : scheme) {
       clonedCommand = command->clone();
@@ -347,7 +348,7 @@ class CommandPool : public CommandPoolInterface<BaseCommand *> {
     runningThreads++;
     while (!stop[a]) {
 
-      BaseCommand *item;
+      BaseCommand<subscription> *item;
 
       if (!queue[a]->tryPop(item)) {
         if (getThreadId() != main_thread_id) {
@@ -376,7 +377,7 @@ class CommandPool : public CommandPoolInterface<BaseCommand *> {
   Atom<uint8_t> runningThreads;
   std::vector<std::thread *> threads;
   std::vector<uint8_t> stop;
-  std::vector<std::unique_ptr<QueueAdapterInterface<BaseCommand *>>> queue;
+  std::vector<std::unique_ptr<QueueAdapterInterface<BaseCommand<subscription> *>>> queue;
   std::vector<subscription> subscriptions;
   Partitioner partitioner;
 
