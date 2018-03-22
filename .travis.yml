@@ -77,7 +77,7 @@ matrix:
       - make tests
       - ctest
     after_success:
-      - coveralls --root src/
+      - coveralls --root .
 
   #
   # Clang 3.8
