@@ -4,6 +4,7 @@ project(CWE)
 set(CMAKE_EXPORT_COMPILE_COMMANDS "true")
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+SET(COVERAGE OFF CACHE BOOL "Coverage")
 
 find_package(Threads REQUIRED)
 
@@ -14,6 +15,11 @@ target_include_directories(
   src/
   external/gtest
 )
+
+if (COVERAGE)
+  target_compile_options(tests PRIVATE --coverage)
+  target_link_libraries(tests PRIVATE --coverage)
+endif()
 
 enable_testing()
 add_test(tests tests)
