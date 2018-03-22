@@ -11,12 +11,6 @@ branches:
 before_script:
 
   #
-  # Build Folder
-  #
-  - mkdir build
-  - cd build
-
-  #
   # Update / Install CMake
   #
   - |
@@ -52,7 +46,7 @@ matrix:
           - gcc-5
           - g++-5
     script:
-      - cmake -DCMAKE_CXX_COMPILER="g++-5" ..
+      - cmake -DCMAKE_CXX_COMPILER="g++-5" .
       - make
       - make tests
       - ctest
@@ -72,12 +66,12 @@ matrix:
           - g++-6
     script:
       - pip install --user cpp-coveralls
-      - cmake -DCMAKE_CXX_COMPILER="g++-6" -DCOVERAGE=1 ..
+      - cmake -DCMAKE_CXX_COMPILER="g++-6" -DCOVERAGE=1 .
       - make
       - make tests
       - ctest
     after_success:
-      - coveralls --root .
+      - coveralls --root .  --exclude external --exclude tests --exclude CMakeFiles
 
   #
   # Clang 3.8
@@ -95,7 +89,7 @@ matrix:
           - gcc-6
           - g++-6
     script:
-      - cmake -DCMAKE_C_COMPILER=clang-3.8 -DCMAKE_CXX_COMPILER=clang++-3.8 ..
+      - cmake -DCMAKE_C_COMPILER=clang-3.8 -DCMAKE_CXX_COMPILER=clang++-3.8 .
       - make
       - make tests
       - ctest
@@ -116,7 +110,7 @@ matrix:
           - gcc-6
           - g++-6
     script:
-      - cmake -DCMAKE_C_COMPILER=clang-3.9 -DCMAKE_CXX_COMPILER=clang++-3.9 ..
+      - cmake -DCMAKE_C_COMPILER=clang-3.9 -DCMAKE_CXX_COMPILER=clang++-3.9 .
       - make
       - make tests
       - ctest
@@ -137,7 +131,7 @@ matrix:
           - gcc-6
           - g++-6
     script:
-      - cmake -DCMAKE_C_COMPILER=clang-4.0 -DCMAKE_CXX_COMPILER=clang++-4.0 ..
+      - cmake -DCMAKE_C_COMPILER=clang-4.0 -DCMAKE_CXX_COMPILER=clang++-4.0 .
       - make
       - make tests
       - ctest
@@ -150,7 +144,7 @@ matrix:
       - TEST="XCode 8.3"
     osx_image: xcode8.3
     script:
-      - cmake ..
+      - cmake .
       - make
       - make tests
       - ctest
@@ -163,7 +157,7 @@ matrix:
       - TEST="XCode 9.2"
     osx_image: xcode9.2
     script:
-      - cmake ..
+      - cmake .
       - make
       - make tests
       - ctest
