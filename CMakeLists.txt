@@ -9,7 +9,7 @@ SET(COVERAGE OFF CACHE BOOL "Coverage")
 find_package(Threads REQUIRED)
 
 add_executable(tests tests/main.cpp tests/dev.cpp external/gtest/gtest-all.cc tests/subscription.cpp)
-target_link_libraries(tests ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(tests PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 target_include_directories(
   tests PUBLIC
   src/
