@@ -32,8 +32,6 @@ before_script:
       if ! brew ls --version cmake &>/dev/null; then brew update; brew install cmake; fi
     fi
 
-  - pip install --user cpp-coveralls
-
 #
 # Build Matrix
 #
@@ -72,6 +70,8 @@ matrix:
         packages:
           - gcc-6
           - g++-6
+    before_script:
+          - pip install --user cpp-coveralls
     script:
       - cmake -DCMAKE_CXX_COMPILER="g++-6" -DCOVERAGE=1 ..
       - make
@@ -138,12 +138,10 @@ matrix:
           - gcc-6
           - g++-6
     script:
-      - cmake -DCMAKE_C_COMPILER=clang-4.0 -DCMAKE_CXX_COMPILER=clang++-4.0 -DCOVERAGE=1 ..
+      - cmake -DCMAKE_C_COMPILER=clang-4.0 -DCMAKE_CXX_COMPILER=clang++-4.0 ..
       - make
       - make tests
       - ctest
-    after_success:
-      - coveralls --root src/
 
   #
   # XCode 8.3
