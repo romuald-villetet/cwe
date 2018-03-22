@@ -127,9 +127,9 @@ template<typename Derived, class subscription = default_subscription>
 class Command : public BaseCommand<subscription> {
  public:
 
-  using BaseCommand::BaseCommand;
+  using BaseCommand<subscription>::BaseCommand;
 
-  BaseCommand *clone() const override {
+  BaseCommand<subscription> *clone() const override {
     return new Derived(static_cast<Derived const &>(*this));
   }
 };
