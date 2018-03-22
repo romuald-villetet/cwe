@@ -71,7 +71,7 @@ matrix:
       - make tests
       - ctest
     after_success:
-      - coveralls --root .  --exclude external --exclude tests --exclude CMakeFiles
+      - coveralls --root .  --exclude external --exclude test --exclude CMakeFiles
 
   #
   # Clang 3.8
