@@ -313,10 +313,6 @@ class CommandPool : public CommandPoolInterface<BaseCommand *> {
 
   bool addCommand(BaseCommand *command) {
 
-    if (command->pool == nullptr) {
-      command->pool = this;
-    }
-
     std::vector<uint8_t> result;
     for (uint8_t a = 0; a < subscriptions.size(); a++) {
       if (subscriptions[a].accepts(*command)) {
@@ -326,6 +322,9 @@ class CommandPool : public CommandPoolInterface<BaseCommand *> {
 
     PartitionScheme scheme = partitioner.partition(result, command->start, command->end, command->minsize);
     BaseCommand *clonedCommand;
+    if (command->pool == nullptr) {
+      command->pool = this;
+    }
 
     for (auto &it : scheme) {
       clonedCommand = command->clone();
