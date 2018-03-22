@@ -17,6 +17,7 @@ target_include_directories(
 )
 
 if (COVERAGE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")
   target_compile_options(tests PRIVATE --coverage)
   target_link_libraries(tests PRIVATE --coverage)
 endif()
