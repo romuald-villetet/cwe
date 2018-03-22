@@ -71,7 +71,7 @@ matrix:
       - make tests
       - ctest
     after_success:
-      - coveralls --root .  --exclude external --exclude test --exclude CMakeFiles --gcov-options '\-lp'
+      - coveralls --root .  --exclude external --exclude CMakeFiles --gcov-options '\-lp'
 
   #
   # Clang 3.8
