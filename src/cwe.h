@@ -80,6 +80,7 @@ template<typename T>
 class CommandPoolInterface {
  public:
 
+  virtual ~CommandPoolInterface() {};
   virtual bool addCommand(T command) = 0;
   virtual void waitUntilDone() = 0;
   virtual bool isDone() = 0;
@@ -146,34 +147,26 @@ class QueueAdapterInterface {
 
 // Queue adapter for lock free MPMCQueue.
 template<typename T>
-class MPMCQueueAdapter : public QueueAdapterInterface<T> {
+class MPMCQueueAdapter : public virtual QueueAdapterInterface<T> {
  public:
-  MPMCQueueAdapter() {
-    queue = new rigtorp::MPMCQueue<T>();
-  };
-
-  ~MPMCQueueAdapter() {
-    printf("gets hrere");
-    delete queue;
-  }
 
   bool tryPop(T &item) {
-    return queue->try_pop(item);
+    return queue.try_pop(item);
   };
 
   bool tryEmplace(T &item) {
-    return queue->try_emplace(item);
+    return queue.try_emplace(item);
   }
 
   void emplace(T &item) {
-    queue->emplace(item);
+    queue.emplace(item);
   }
 
   void pop(T &item) {
-    queue->pop(item);
+    queue.pop(item);
   }
  private:
-  rigtorp::MPMCQueue<T> *queue;
+  rigtorp::MPMCQueue<T> queue;
 };
 
 // Part
@@ -253,7 +246,7 @@ template<
     template<typename> class QueueAdapter = MPMCQueueAdapter,
     class subscription = default_subscription
 >
-class CommandPool : public CommandPoolInterface<BaseCommand<subscription> *> {
+class CommandPool : public virtual CommandPoolInterface<BaseCommand<subscription> *> {
 
   static_assert(
       std::is_base_of<CommandPartitioner, Partitioner>::value,
@@ -287,7 +280,7 @@ class CommandPool : public CommandPoolInterface<BaseCommand<subscription> *> {
     }
   };
 
-  ~CommandPool() {
+  virtual ~CommandPool() {
 
     stop.assign(numOfThreads, true);
 
