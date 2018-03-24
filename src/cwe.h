@@ -139,6 +139,7 @@ class Command : public BaseCommand<subscription> {
 template<typename T>
 class QueueAdapterInterface {
  public:
+  virtual ~QueueAdapterInterface() {};
   virtual bool tryPop(T &item) = 0;
   virtual bool tryEmplace(T &item) = 0;
   virtual void emplace(T &item) = 0;
