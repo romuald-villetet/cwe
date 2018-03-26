@@ -272,6 +272,7 @@ class CommandPool : public virtual CommandPoolInterface<BaseCommand<subscription
     }
 
     stop.resize(numOfThreads);
+    subscriptions.resize(numOfThreads);
 
     for (uint8_t b = 0; b < numOfThreads; b++) {
       queue.push_back(std::unique_ptr<QueueAdapter<BaseCommand<subscription> *>>(new QueueAdapter<BaseCommand<subscription> *>));
@@ -318,6 +319,10 @@ class CommandPool : public virtual CommandPoolInterface<BaseCommand<subscription
       if (subscriptions[a].accepts(*command)) {
         result.push_back(a);
       };
+    }
+
+    if (result.size() == 0) {
+      return false;
     }
 
     PartitionScheme scheme = partitioner.partition(result, command->start, command->end, command->minsize);
