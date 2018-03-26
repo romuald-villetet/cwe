@@ -265,7 +265,7 @@ class CommandPool : public virtual CommandPoolInterface<BaseCommand<subscription
 
  public:
 
-  CommandPool() : numOfThreads(n), runningThreads(0), partitioner() {
+  CommandPool() : numOfThreads(n), runningThreads(0), work(0), partitioner() {
 
     if (numOfThreads == 0) {
       numOfThreads = hardware_concurrency;
