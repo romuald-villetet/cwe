@@ -279,7 +279,7 @@ class CommandPool : public virtual CommandPoolInterface<BaseCommand<subscription
     }
 
     for (uint8_t a = mainAsWorker; a < numOfThreads; a++) {
-      threads.push_back(new std::thread(&CommandPool::consume, this, a - mainAsWorker));
+      threads.push_back(new std::thread(&CommandPool::consume, this, a));
     }
 
     while (runningThreads.load() != (numOfThreads - mainAsWorker)) {
