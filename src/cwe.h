@@ -176,6 +176,10 @@ struct Part {
   Part(uintmax_t begin, uintmax_t end, uint8_t threadIndex, uintmax_t minSize)
       : begin(begin), end(end), threadIndex(threadIndex), minSize(minSize) {};
 
+  bool operator==(const Part &rhs) const {
+    return (begin == rhs.begin && end == rhs.end && threadIndex == rhs.threadIndex && minSize == rhs.minSize);
+  }
+
   uintmax_t begin;
   uintmax_t end;
   uint8_t threadIndex;
