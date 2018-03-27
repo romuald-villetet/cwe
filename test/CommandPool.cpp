@@ -3,6 +3,7 @@
 
 using CWE::CommandPool;
 using CWE::Command;
+using CWE::BaseCommand;
 
 struct Counter {
   Counter() {
@@ -95,5 +96,16 @@ TEST(CommandPool, addCommand_recursive) {
   pool.addCommand(new RecursiveCountCommand());
   pool.waitUntilDone();
   EXPECT_EQ(Counter::counter.load(), 2);
+  Counter::reset();
+}
+
+TEST(CommandPool, addCommand_notAccepted) {
+  CommandPool<> pool;
+  BaseCommand<>* command = new RecursiveCountCommand(0,10, 1);
+  command->subscribeToGroup(1);
+  EXPECT_EQ(pool.addCommand(command), false);
+
+  pool.waitUntilDone();
+  EXPECT_EQ(Counter::counter.load(), 0);
   Counter::reset();
 }

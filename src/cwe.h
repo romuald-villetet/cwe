@@ -42,7 +42,7 @@ class Subscription {
         == subscription.mask;
   }
 
-  void subscribeToGroup(type group) {
+  void subscribeToGroup(uintmax_t group) {
     type bit = 1 << group;
     subscribe(bit);
   }
@@ -51,7 +51,7 @@ class Subscription {
     this->mask = this->mask | mask;
   }
 
-  void unSubscribeFromGroup(const type group) {
+  void unSubscribeFromGroup(uintmax_t group) {
     type bit = 1 << group;
     unSubscribe(bit);
   }
@@ -136,9 +136,7 @@ class QueueAdapterInterface {
  public:
   virtual ~QueueAdapterInterface() {};
   virtual bool tryPop(T &item) = 0;
-  virtual bool tryEmplace(T &item) = 0;
   virtual void emplace(T &item) = 0;
-  virtual void pop(T &item) = 0;
 };
 
 // Queue adapter for lock free MPMCQueue.
@@ -149,17 +147,10 @@ class MPMCQueueAdapter : public virtual QueueAdapterInterface<T> {
     return queue.try_pop(item);
   };
 
-  bool tryEmplace(T &item) {
-    return queue.try_emplace(item);
-  }
-
   void emplace(T &item) {
     queue.emplace(item);
   }
 
-  void pop(T &item) {
-    queue.pop(item);
-  }
  private:
   rigtorp::MPMCQueue<T> queue;
 };
