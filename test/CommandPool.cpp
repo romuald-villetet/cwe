@@ -72,7 +72,7 @@ TEST(CommandPool, addCommand_minRange) {
   pool.addCommand(new CountCommand(0, 1));
   pool.waitUntilDone();
 
-  EXPECT_EQ(Counter::counter.load(), 1);
+  EXPECT_EQ(Counter::counter.load(), (unsigned int) 1);
   Counter::reset();
 }
 
@@ -81,7 +81,7 @@ TEST(CommandPool, addCommand_single) {
   pool.addCommand(new CountCommand());
   pool.waitUntilDone();
 
-  EXPECT_EQ(Counter::counter.load(), 1);
+  EXPECT_EQ(Counter::counter.load(), (unsigned int) 1);
   Counter::reset();
 }
 
@@ -90,12 +90,12 @@ TEST(CommandPool, addCommand_recursive) {
   pool.addCommand(new RecursiveCountCommand(0,10, 1));
   pool.waitUntilDone();
 
-  EXPECT_EQ(Counter::counter.load(), 20);
+  EXPECT_EQ(Counter::counter.load(), (unsigned int) 20);
   Counter::reset();
 
   pool.addCommand(new RecursiveCountCommand());
   pool.waitUntilDone();
-  EXPECT_EQ(Counter::counter.load(), 2);
+  EXPECT_EQ(Counter::counter.load(), (unsigned int) 2);
   Counter::reset();
 }
 
@@ -106,6 +106,6 @@ TEST(CommandPool, addCommand_notAccepted) {
   EXPECT_EQ(pool.addCommand(command), false);
 
   pool.waitUntilDone();
-  EXPECT_EQ(Counter::counter.load(), 0);
+  EXPECT_EQ(Counter::counter.load(), (unsigned int) 0);
   Counter::reset();
 }
