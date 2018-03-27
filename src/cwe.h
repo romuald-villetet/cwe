@@ -34,7 +34,6 @@ const auto uint8_t_max = std::numeric_limits<uint8_t>::max();
 template<typename type>
 class Subscription {
  public:
-
   Subscription() : mask(0) {};
   Subscription(type mask) : mask(mask) {};
 
@@ -69,7 +68,6 @@ class Subscription {
 
  protected:
   type mask;
-
 };
 
 typedef std::bitset<uint8_t_max> subscription_type;
@@ -79,7 +77,6 @@ typedef Subscription<subscription_type> default_subscription;
 template<typename T>
 class CommandPoolInterface {
  public:
-
   virtual ~CommandPoolInterface() {};
   virtual bool addCommand(T command) = 0;
   virtual void waitUntilDone() = 0;
@@ -87,10 +84,9 @@ class CommandPoolInterface {
 };
 
 // Command
-template <class subscription = default_subscription>
+template<class subscription = default_subscription>
 class BaseCommand : public subscription {
  public:
-
   explicit BaseCommand(uintmax_t index = 0) : start(index), end(index), minsize(0), pool(nullptr) {}
 
   BaseCommand(uintmax_t start, uintmax_t end, uintmax_t minsize = 0)
@@ -127,7 +123,6 @@ class BaseCommand : public subscription {
 template<typename Derived, class subscription = default_subscription>
 class Command : public BaseCommand<subscription> {
  public:
-
   using BaseCommand<subscription>::BaseCommand;
 
   BaseCommand<subscription> *clone() const override {
@@ -150,7 +145,6 @@ class QueueAdapterInterface {
 template<typename T>
 class MPMCQueueAdapter : public virtual QueueAdapterInterface<T> {
  public:
-
   bool tryPop(T &item) {
     return queue.try_pop(item);
   };
@@ -172,7 +166,6 @@ class MPMCQueueAdapter : public virtual QueueAdapterInterface<T> {
 
 // Part
 struct Part {
-
   Part(uintmax_t begin, uintmax_t end, uint8_t threadIndex, uintmax_t minSize)
       : begin(begin), end(end), threadIndex(threadIndex), minSize(minSize) {};
 
@@ -192,7 +185,6 @@ typedef std::vector<Part> PartitionScheme;
 // CommandPartitioner
 class CommandPartitioner {
  public:
-
   CommandPartitioner() : generator(std::default_random_engine{}) {};
 
   virtual PartitionScheme partition(std::vector<uint8_t> threads,
@@ -252,19 +244,18 @@ template<
     class subscription = default_subscription
 >
 class CommandPool : public virtual CommandPoolInterface<BaseCommand<subscription> *> {
-
   static_assert(
       std::is_base_of<CommandPartitioner, Partitioner>::value,
       "CommandPartitioner is not a base class of given Partitioner"
                );
 
   static_assert(
-      std::is_base_of<QueueAdapterInterface<BaseCommand<subscription> *>, QueueAdapter<BaseCommand<subscription> *>>::value,
+      std::is_base_of<QueueAdapterInterface<BaseCommand<subscription> *>,
+                      QueueAdapter<BaseCommand<subscription> *>>::value,
       "QueueAdapterInterface<BaseCommand *> is not a base class of given QueueAdapter<BaseCommand *>"
                );
 
  public:
-
   CommandPool() : numOfThreads(n), runningThreads(0), work(0), partitioner() {
 
     if (numOfThreads == 0) {
@@ -275,7 +266,8 @@ class CommandPool : public virtual CommandPoolInterface<BaseCommand<subscription
     subscriptions.resize(numOfThreads);
 
     for (uint8_t b = 0; b < numOfThreads; b++) {
-      queue.push_back(std::unique_ptr<QueueAdapter<BaseCommand<subscription> *>>(new QueueAdapter<BaseCommand<subscription> *>));
+      queue.push_back(std::unique_ptr<QueueAdapter<BaseCommand<subscription> *>>(new QueueAdapter<BaseCommand<
+          subscription> *>));
     }
 
     for (uint8_t a = mainAsWorker; a < numOfThreads; a++) {
@@ -313,7 +305,6 @@ class CommandPool : public virtual CommandPoolInterface<BaseCommand<subscription
   }
 
   bool addCommand(BaseCommand<subscription> *command) {
-
     std::vector<uint8_t> result;
     for (uint8_t a = 0; a < subscriptions.size(); a++) {
       if (subscriptions[a].accepts(*command)) {
@@ -383,7 +374,6 @@ class CommandPool : public virtual CommandPoolInterface<BaseCommand<subscription
   std::vector<std::unique_ptr<QueueAdapterInterface<BaseCommand<subscription> *>>> queue;
   std::vector<subscription> subscriptions;
   Partitioner partitioner;
-
 };
 }
 #endif // CWE_H
