@@ -6,6 +6,10 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 SET(COVERAGE OFF CACHE BOOL "Coverage")
 
+if (MSVC)
+  add_definitions(-DGTEST_HAS_TR1_TUPLE=0)
+endif ()
+
 find_package(Threads REQUIRED)
 
 add_executable(tests test/Main.cpp external/gtest/gtest-all.cc test/Subscription.cpp test/CommandPartitioner.cpp test/CommandPool.cpp)
@@ -20,7 +24,7 @@ if (COVERAGE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")
   target_compile_options(tests PRIVATE --coverage)
   target_link_libraries(tests PRIVATE --coverage)
-endif()
+endif ()
 
 enable_testing()
 add_test(tests tests)
