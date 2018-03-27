@@ -22,10 +22,8 @@ namespace CWE {
 
 // Threads
 const auto getThreadId = std::this_thread::get_id;
-typedef std::thread::id ThreadId;
 const auto main_thread_id = std::this_thread::get_id();
 const auto hardware_concurrency = std::thread::hardware_concurrency();
-typedef std::vector<std::thread *> Threads;
 
 // Limits
 const auto uint8_t_max = std::numeric_limits<uint8_t>::max();
@@ -210,7 +208,7 @@ class CommandPartitioner {
         parts.emplace_back(Part(range - leftOver, range, threads[thread % threadSize], minSize));
       }
     } else {
-      std::uniform_int_distribution<unsigned int> distribution(0, threads.size() - 1);
+      std::uniform_int_distribution<unsigned int> distribution(0, static_cast<unsigned int>(threads.size() - 1));
       parts.emplace_back(Part(start, end, threads[distribution(generator)], minSize));
     }
 

@@ -23,7 +23,7 @@ class CountCommand : public Command<CountCommand> {
   void execute()
   {
     if (isRange()) {
-      for (unsigned int i = start; i < end ; i++) {
+      for (auto i = start; i < end ; i++) {
         Counter count;
       }
     }
@@ -41,7 +41,7 @@ class RecursiveCountCommand : public Command<RecursiveCountCommand> {
   void execute()
   {
     if (isRange()) {
-      for (unsigned int i = start; i < end ; i++) {
+      for (auto i = start; i < end ; i++) {
         Counter count;
         addCommand(new CountCommand());
       }
