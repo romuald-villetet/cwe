@@ -7,7 +7,6 @@ typedef Subscription<uint8_t> Subscribe;
 
 class TestSubsribe : public Subscribe {
  public:
-
   using Subscribe::Subscription;
 
   bool operator==(const TestSubsribe &rhs) const {
@@ -45,7 +44,6 @@ TEST(Subscription, subribeToGroup) {
 }
 
 TEST(Subscription, subscribe) {
-
   const uint8_t testSize = 4;
   const uint8_t testData[testSize][3] = {
       {82, 3, 83},     // 01010010 | 00000011 = 01010011
@@ -87,7 +85,6 @@ TEST(Subscription, unSubribeFromGroup) {
 }
 
 TEST(Subscription, unsubscribe) {
-
   const uint8_t testSize = 2;
   const uint8_t testData[testSize][3] = {
       {82, 3, 80},  // 01010010 - 00000011 = 01010000
@@ -105,7 +102,6 @@ TEST(Subscription, unsubscribe) {
 }
 
 TEST(Subscription, accepts) {
-
   const uint8_t testSize = 8;
   const uint8_t testData[testSize][3] = {
       {82, 3, false},   // 01010010 & 00000011 = false

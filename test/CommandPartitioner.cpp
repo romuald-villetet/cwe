@@ -15,7 +15,6 @@ TEST(CommandPartitioner, distributed_range_no_minsize) {
   PartitionScheme result = partitioner->partition({0, 1}, 0, 100, 0);
 
   EXPECT_EQ(expectedResult, result);
-
 }
 
 TEST(CommandPartitioner, distributed_range_minsize) {
@@ -36,7 +35,6 @@ TEST(CommandPartitioner, distributed_range_minsize) {
   PartitionScheme result = partitioner->partition({0, 1}, 0, 100, 10);
 
   EXPECT_EQ(expectedResult, result);
-
 }
 
 TEST(CommandPartitioner, not_distributed_range) {
@@ -48,7 +46,6 @@ TEST(CommandPartitioner, not_distributed_range) {
   PartitionScheme result = partitioner->partition({0, 1, 2, 3, 4}, 0, 100, 100);
 
   EXPECT_EQ(expectedResult, result);
-
 }
 
 TEST(CommandPartitioner, not_range) {
@@ -60,5 +57,4 @@ TEST(CommandPartitioner, not_range) {
   PartitionScheme result = partitioner->partition({0, 1, 2, 3, 4}, 0, 1);
 
   EXPECT_EQ(expectedResult, result);
-
 }
