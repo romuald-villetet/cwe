@@ -41,7 +41,8 @@ class Subscription {
   }
 
   void subscribeToGroup(uintmax_t group) {
-    type bit = 1 << group;
+    type def = 1;
+    type bit = def << group;
     subscribe(bit);
   }
 
@@ -50,7 +51,8 @@ class Subscription {
   }
 
   void unSubscribeFromGroup(uintmax_t group) {
-    type bit = 1 << group;
+    type def = 1;
+    type bit = def << group;
     unSubscribe(bit);
   }
 
