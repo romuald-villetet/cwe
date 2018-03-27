@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/romualdvilletet/cwe.svg?branch=master)](https://travis-ci.org/romualdvilletet/cwe) [![Build status](https://ci.appveyor.com/api/projects/status/du2ff9mplg975wly?svg=true)](https://ci.appveyor.com/project/romualdvilletet/cwe) [![Coverage Status](https://coveralls.io/repos/github/romualdvilletet/cwe/badge.svg?branch=master)](https://coveralls.io/github/romualdvilletet/cwe?branch=master)
+[![Build Status](https://travis-ci.org/romualdvilletet/cwe.svg?branch=master)](https://travis-ci.org/romualdvilletet/cwe) [![Build status](https://ci.appveyor.com/api/projects/status/du2ff9mplg975wly?svg=true)](https://ci.appveyor.com/project/romualdvilletet/cwe) [![Coverage Status](https://coveralls.io/repos/github/romualdvilletet/cwe/badge.svg?branch=master)](https://coveralls.io/github/romualdvilletet/cwe?branch=master) [![CodeFactor](https://www.codefactor.io/repository/github/romualdvilletet/cwe/badge/master)](https://www.codefactor.io/repository/github/romualdvilletet/cwe/overview/master)
 
 # Introduction
 
