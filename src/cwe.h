@@ -46,8 +46,8 @@ class Subscription {
     subscribe(bit);
   }
 
-  void subscribe(const type &mask) {
-    this->mask = this->mask | mask;
+  void subscribe(const type &otherMask) {
+    mask = mask | otherMask;
   }
 
   void unSubscribeFromGroup(uintmax_t group) {
@@ -56,11 +56,11 @@ class Subscription {
     unSubscribe(bit);
   }
 
-  void unSubscribe(const type mask) {
-    for (int a = 0; a < sizeof(type) * 8; a++) {
-      if (mask & (1 << a)) {
-        if ((this->mask & (1 << a))) {
-          this->mask &= ~(1 << a);
+  void unSubscribe(const type &otherMask) {
+    for (auto a = 0; a < sizeof(type) * 8; a++) {
+      if (otherMask & (1 << a)) {
+        if ((mask & (1 << a))) {
+          mask &= ~(1 << a);
         }
       }
     }
@@ -246,7 +246,7 @@ class CommandPool : public virtual CommandPoolInterface<BaseCommand<subscription
  public:
   CommandPool() : numOfThreads(n), runningThreads(0), work(0), partitioner() {
     if (numOfThreads == 0) {
-      numOfThreads = hardware_concurrency;
+      numOfThreads = static_cast<uint8_t>(hardware_concurrency);
     }
 
     stop.resize(numOfThreads);
