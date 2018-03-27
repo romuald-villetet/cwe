@@ -57,7 +57,7 @@ class Subscription {
   }
 
   void unSubscribe(const type &otherMask) {
-    for (auto a = 0; a < sizeof(type) * 8; a++) {
+    for (std::size_t a = 0; a < sizeof(type) * 8; a++) {
       if (otherMask & (1 << a)) {
         if ((mask & (1 << a))) {
           mask &= ~(1 << a);
