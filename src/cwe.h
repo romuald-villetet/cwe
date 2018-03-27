@@ -191,7 +191,6 @@ class CommandPartitioner {
                                     uintmax_t start,
                                     uintmax_t end,
                                     uintmax_t minSize = 0) {
-
     uint8_t threadSize = (uint8_t) threads.size();
     PartitionScheme parts;
     uintmax_t range = end - start;
@@ -199,7 +198,6 @@ class CommandPartitioner {
     assert(threadSize != 0);
 
     if (range != 0) {
-
       uint8_t thread = 0;
 
       if (minSize == 0 && range == 1) {
@@ -221,7 +219,6 @@ class CommandPartitioner {
         parts.emplace_back(Part(range - leftOver, range, threads[thread % threadSize], minSize));
       }
     } else {
-
       std::uniform_int_distribution<unsigned int> distribution(0, threads.size() - 1);
       parts.emplace_back(Part(start, end, threads[distribution(generator)], minSize));
     }
@@ -257,7 +254,6 @@ class CommandPool : public virtual CommandPoolInterface<BaseCommand<subscription
 
  public:
   CommandPool() : numOfThreads(n), runningThreads(0), work(0), partitioner() {
-
     if (numOfThreads == 0) {
       numOfThreads = hardware_concurrency;
     }
@@ -279,7 +275,6 @@ class CommandPool : public virtual CommandPoolInterface<BaseCommand<subscription
   };
 
   virtual ~CommandPool() {
-
     stop.assign(numOfThreads, true);
 
     for (uint8_t a = 0; a < numOfThreads - mainAsWorker; a++) {
@@ -337,11 +332,9 @@ class CommandPool : public virtual CommandPoolInterface<BaseCommand<subscription
   }
 
  private:
-
   int consume(uint8_t a) {
     runningThreads++;
     while (!stop[a]) {
-
       BaseCommand<subscription> *item;
 
       if (!queue[a]->tryPop(item)) {
