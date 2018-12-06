@@ -13,10 +13,49 @@
 #include <random>
 #include <memory>
 
-// @todo make these ourselves.
 #include "../external/MPMCQueue/MPMCQueue.h"
-//#include "../external/microprofile/microprofile.h"
-//#include "../external/microprofile/microprofile.cpp"
+
+#ifdef PROFILE
+
+#include "../external/microprofile/microprofile.h"
+
+#define PROFILER_SCOPE(id) MICROPROFILE_SCOPEI(id, id, 0xff3399ff)
+#define PROFILER_SCOPE_COLOR(id, color) MICROPROFILE_SCOPEI(id, id, color)
+
+#define PROFILER_THREAD(id)  MicroProfileOnThreadCreate(id)
+#define PROFILER_THREAD_EXIT() MicroProfileOnThreadExit()
+#define PROFILER_HTML(file) std::string(std::string(file)+".html").c_str()
+#define PROFILER_CSV(file) std::string(std::string(file)+".csv").c_str()
+#define PROFILER_SAVE(file) MicroProfileDumpFileImmediately(PROFILER_HTML(file), PROFILER_CSV(file), nullptr);
+#define PROFILER_INIT() MicroProfileSetEnableAllGroups(1); \
+                        MicroProfileSetForceMetaCounters(1); \
+                        MicroProfileOnThreadCreate("Thread-0")
+
+#define PROFILER_FRAME() MicroProfileFlip(nullptr);
+#define PROFILER_COUNTER_DECLARE(name, path) MICROPROFILE_DEFINE_LOCAL_ATOMIC_COUNTER(name, path)
+#define PROFILER_COUNTER_CONFIG(path) MICROPROFILE_COUNTER_CONFIG(path, MICROPROFILE_COUNTER_FORMAT_DEFAULT, 0, MICROPROFILE_COUNTER_FLAG_DETAILED)
+#define PROFILER_COUNTER_ADD(name, count) MICROPROFILE_COUNTER_LOCAL_ADD_ATOMIC(name, count); \
+          MICROPROFILE_COUNTER_LOCAL_UPDATE_ADD_ATOMIC(name)
+#define PROFILER_COUNTER_SUB(name, count) MICROPROFILE_COUNTER_LOCAL_SUB_ATOMIC(name, count); \
+          MICROPROFILE_COUNTER_LOCAL_UPDATE_ADD_ATOMIC(name)
+
+#else
+
+#define PROFILER_SCOPE(id) do {} while(0)
+#define PROFILER_SCOPE_COLOR(id, color) do {} while(0)
+#define PROFILER_THREAD(id) do {} while(0)
+#define PROFILER_THREAD_EXIT() do {} while(0)
+#define PROFILER_SAVE(file) do {} while(0)
+#define PROFILER_HTML(file) do {} while(0)
+#define PROFILER_CSV(file) do {} while(0)
+#define PROFILER_INIT() do {} while(0)
+#define PROFILER_FRAME() do {} while(0)
+#define PROFILER_COUNTER_DECLARE do {} while(0)
+#define PROFILER_COUNTER_CONFIG do {} while(0)
+#define PROFILER_COUNTER_ADD do {} while(0)
+#define PROFILER_COUNTER_SUB do {} while(0)
+
+#endif // PROFILE
 
 namespace CWE {
 
@@ -26,7 +65,7 @@ const auto main_thread_id = std::this_thread::get_id();
 const auto hardware_concurrency = std::thread::hardware_concurrency();
 
 // Limits
-const auto uint8_t_max = std::numeric_limits<uint8_t>::max();
+const auto uint8_t_max = (std::numeric_limits<uint8_t>::max)();
 
 // Subscription
 template<typename type>
@@ -349,7 +388,7 @@ class CommandPool : public virtual CommandPoolInterface<BaseCommand<subscription
 
   CommandPool(const CommandPool &other) = delete;
   CommandPool &operator=(const CommandPool &) = delete;
-
+   
   uint8_t numOfThreads;
   Atom<uint32_t> work;
   Atom<uint8_t> runningThreads;

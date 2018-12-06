@@ -5,6 +5,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS "true")
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 SET(COVERAGE OFF CACHE BOOL "Coverage")
+set(PROFILE ON CACHE BOOL "true")
+set(EXTRA_SRC)
 
 if(MSVC)
   add_definitions(-DGTEST_HAS_TR1_TUPLE=0)
@@ -20,13 +22,22 @@ endif()
 
 find_package(Threads REQUIRED)
 
-add_executable(tests test/Main.cpp external/gtest/gtest-all.cc test/Subscription.cpp test/CommandPartitioner.cpp test/CommandPool.cpp)
+IF (PROFILE)
+  ADD_DEFINITIONS( -DPROFILE)
+  set(EXTRA_SRC ${EXTRA_SRC} external/microprofile/microprofile.cpp)
+ENDIF (PROFILE)
+
+add_executable(tests test/Main.cpp external/gtest/gtest-all.cc test/Subscription.cpp test/CommandPartitioner.cpp test/CommandPool.cpp ${EXTRA_SRC})
 target_link_libraries(tests PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 target_include_directories(
   tests PUBLIC
   src/
   external/gtest
 )
+
+if(WIN32 AND PROFILE)
+  target_link_libraries(tests wsock32 ws2_32)
+endif()
 
 if (COVERAGE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")
