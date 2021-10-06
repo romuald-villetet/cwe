@@ -3,7 +3,7 @@
 
 using CWE::Subscription;
 
-typedef Subscription<uint8_t> Subscribe;
+typedef Subscription<uint8_t, unsigned char> Subscribe;
 
 class TestSubsribe : public Subscribe {
  public:

@@ -68,7 +68,7 @@ const auto hardware_concurrency = std::thread::hardware_concurrency();
 const auto uint8_t_max = (std::numeric_limits<uint8_t>::max)();
 
 // Subscription
-template<typename type>
+template<typename type, typename numeric_type>
 class Subscription {
  public:
   Subscription() : mask(0) {};
@@ -79,7 +79,7 @@ class Subscription {
         == subscription.mask;
   }
 
-  void subscribeToGroup(uintmax_t group) {
+  void subscribeToGroup(numeric_type group) {
     type def = 1;
     type bit = def << group;
     subscribe(bit);
@@ -89,7 +89,7 @@ class Subscription {
     mask = mask | otherMask;
   }
 
-  void unSubscribeFromGroup(uintmax_t group) {
+  void unSubscribeFromGroup(numeric_type group) {
     type def = 1;
     type bit = def << group;
     unSubscribe(bit);
@@ -109,8 +109,9 @@ class Subscription {
   type mask;
 };
 
+typedef unsigned char subscription_numeric_type;
 typedef std::bitset<uint8_t_max> subscription_type;
-typedef Subscription<subscription_type> default_subscription;
+typedef Subscription<subscription_type, subscription_numeric_type> default_subscription;
 
 // CommandPoolInterface
 template<typename T>
@@ -274,13 +275,13 @@ class CommandPool : public virtual CommandPoolInterface<BaseCommand<subscription
   static_assert(
       std::is_base_of<CommandPartitioner, Partitioner>::value,
       "CommandPartitioner is not a base class of given Partitioner"
-               );
+  );
 
   static_assert(
       std::is_base_of<QueueAdapterInterface<BaseCommand<subscription> *>,
                       QueueAdapter<BaseCommand<subscription> *>>::value,
       "QueueAdapterInterface<BaseCommand *> is not a base class of given QueueAdapter<BaseCommand *>"
-               );
+  );
 
  public:
   CommandPool() : numOfThreads(n), work(0), runningThreads(0), partitioner() {
@@ -388,7 +389,7 @@ class CommandPool : public virtual CommandPoolInterface<BaseCommand<subscription
 
   CommandPool(const CommandPool &other) = delete;
   CommandPool &operator=(const CommandPool &) = delete;
-   
+
   uint8_t numOfThreads;
   Atom<uint32_t> work;
   Atom<uint8_t> runningThreads;
